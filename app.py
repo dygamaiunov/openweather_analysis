@@ -25,6 +25,8 @@ async def get_all_current_weather_async(df: pd.DataFrame, api_key: str) -> pd.Da
                 params=params,
                 timeout=aiohttp.ClientTimeout(total=10),
             ) as resp:
+                if resp.status == 401:
+                    raise ValueError('Неверный API ключ')
                 data = await resp.json()
                 return {"city": city, "temp_now": data["main"]["temp"]}
 
@@ -82,19 +84,20 @@ if not api_key:
     st.info("Чтобы показать текущую погоду, введите API-ключ OpenWeatherMap")
     st.stop()
 
-if resp.status == 401:
-    st.error('Неверный API ключ. Пожалуйста, введите корректный API-ключ')
-
 # получаем погоду (асинхронно, но запускаем из sync через helper)
 with st.spinner("Запрашиваем текущую погоду..."):
-    weather_df = run_async(get_all_current_weather_async(df, api_key))
+    try:
+        weather_df = run_async(get_all_current_weather_async(df, api_key))
+    except ValueError:
+        st.error('Пожалуйста, введите корректный API-ключ')
+        st.stop()
 
 # показываем температуру выбранного города
 row = weather_df.loc[weather_df["city"] == city, "temp_now"]
 if row.empty:
     st.warning(f"Не удалось получить погоду для города: {city}")
 else:
-
     st.metric(label=f"Температура в {city}", value=f"{row.iloc[0]} °C")
+
 
 
