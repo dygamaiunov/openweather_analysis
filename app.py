@@ -69,7 +69,7 @@ if not uploaded_file:
     st.info("Загрузите CSV файл, чтобы выбрать город и получить текущую погоду в нем")
     st.stop()
 
-df = pd.read_csv(uploaded_file)
+df = pd.read_csv(uploaded_file, parse_dates=["timestamp"])
 
 # выбираем город
 cities = sorted(df["city"].unique())
@@ -100,6 +100,7 @@ else:
     st.metric(label=f"Температура в {city}", value=f"{row.iloc[0]} °C")
 
 st.table(df[df["city"] == city].describe())
+
 
 
 
