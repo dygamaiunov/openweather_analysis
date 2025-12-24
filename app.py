@@ -163,7 +163,9 @@ chart = (
     .interactive(bind_y=False)
 )
 
+st.subheader(f"Аномальные температуры")
 st.altair_chart(chart, use_container_width=True)
+
 
 
 
