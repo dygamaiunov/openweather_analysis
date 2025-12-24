@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import date
 import asyncio
 import aiohttp
 import altair as alt
 
+today = date.today()
 
 # добавим асинхронную функцию
 async def get_all_current_weather_async(df: pd.DataFrame, api_key: str) -> pd.DataFrame:
@@ -216,6 +218,7 @@ seasons_profiling_df = seasons_profiling_df.rename(columns={
 
 st.subheader(f"Сезонные профили погоды для {city}")
 st.table(seasons_profiling_df)
+
 
 
 
