@@ -166,6 +166,28 @@ chart = (
 st.subheader(f"Аномальные температуры")
 st.altair_chart(chart, use_container_width=True)
 
+season_map = {
+    "winter": "Зима",
+    "spring": "Весна",
+    "summer": "Лето",
+    "autumn": "Осень",
+}
+
+seasons_profiling_df = prepared_df.copy()
+
+# переименовать значения в колонке season
+seasons_profiling_df["season"] = seasons_profiling_df["season"].map(season_map).fillna(seasons_profiling_df["season"])
+
+# переименовать колонки
+seasons_profiling_df = seasons_profiling_df.rename(columns={
+    "season": "Время года",
+    "mean_seasonal_temperature": "Средняя температура",
+    "std_seasonal_temperature": "СКО по температуре",
+})
+
+st.subheader(f"Сезонные профили погоды для {city}")
+st.table(seasons_profiling_df)
+
 
 
 
