@@ -139,13 +139,20 @@ color_scale = alt.Scale(
     range=["#6f86b7", "#3a3a3a", "#b56b6b"]  # muted blue, anthracite, muted red
 )
 
-# окно по умолчанию: последние 4 года
+# границы по времени
 max_ts = prepared_df["timestamp"].max()
-min_default = max_ts - pd.DateOffset(years=4)
+min_ts = prepared_df["timestamp"].min()
 
-# интерактивный "ползунок" по X (interval selection)
-brush = alt.selection_interval(encodings=["x"])
+# стартовый диапазон: последний год (если данных меньше года — покажем всё)
+min_default = max(min_ts, max_ts - pd.DateOffset(years=1))
 
+# selection "ползунок" по оси X
+brush = alt.selection_interval(
+    encodings=["x"],
+    value={"x": [min_default, max_ts]},  # диапазон по умолчанию
+)
+
+# базовая часть (столбики с цветами и тултипом)
 base = (
     alt.Chart(prepared_df)
     .mark_bar()
@@ -161,30 +168,25 @@ base = (
     )
 )
 
-# основной график (крупный), реагирует на выделение снизу
-main = (
-    base.transform_filter(brush)
-        .properties(height=450)
-)
+# показывает только выбранный диапазон
+main = base.transform_filter(brush).properties(height=450)
 
-# ползунок
+# нижняя панель(по ней выделяем диапазон)
 overview = (
     alt.Chart(prepared_df)
     .mark_area(opacity=0.25)
     .encode(
-        x=alt.X(
-            "timestamp:T",
-            title="",
-            scale=alt.Scale(domain=[min_default, max_ts])  # старт: последние 4 года
-        ),
+        x=alt.X("timestamp:T", title=""),
         y=alt.Y("temperature:Q", title=""),
     )
-    .properties(height=80)
+    .properties(height=90)
     .add_params(brush)
 )
 
-chart = alt.vconcat(main, overview)
+chart = alt.vconcat(main, overview).resolve_scale(x="shared")
+
 st.altair_chart(chart, use_container_width=True)
+
 
 
 
