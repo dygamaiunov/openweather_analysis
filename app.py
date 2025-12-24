@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import asyncio
 import aiohttp
 import altair as alt
@@ -156,6 +157,7 @@ chart = (
 )
 
 st.altair_chart(chart, use_container_width=True)
+
 
 
 
