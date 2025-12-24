@@ -99,7 +99,7 @@ def weather_test(df: pd.DataFrame, city: str, current_city_temp: float):
 
     lower = mean_seasonal_temperature - 2 * std_seasonal_temperature
     higher = mean_seasonal_temperature + 2 * std_seasonal_temperature
-    outlier_check = str(np.where((current_city_temp > higher) | (current_city_temp < lower), 'за пределами нормы', 'в норме'))
+    outlier_check = np.where((current_city_temp > higher) | (current_city_temp < lower), "за пределами нормы", "в норме").item()
 
     return outlier_check
 
@@ -148,9 +148,10 @@ row = weather_df.loc[weather_df["city"] == city, "temp_now"]
 if row.empty:
     st.warning(f"Не удалось получить погоду для города: {city}")
 else:
-    st.metric(label=f"Температура в {city}", value=f"{row.iloc[0]} °C")
-    indicator = weather_test(df, city, row)
-    st.metric(value=indicator)
+    current_temp = float(row.iloc[0])
+    st.metric(label=f"Температура в {city}", value=f"{current_temp:.2f} °C")
+    indicator = weather_test(df, city, current_temp)
+    st.metric(label="Оценка текущей температуры", value=indicator)
 
 st.subheader(f"Описательная статистика для {city}")
 st.table(df[df["city"] == city].describe())
@@ -219,6 +220,7 @@ seasons_profiling_df = seasons_profiling_df.rename(columns={
 
 st.subheader(f"Сезонные профили погоды для {city}")
 st.table(seasons_profiling_df)
+
 
 
 
