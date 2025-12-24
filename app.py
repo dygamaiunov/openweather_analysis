@@ -75,6 +75,32 @@ def weather_analysis(df):
 
     return df
 
+def get_season(d: date):
+    m = d.month
+    if m in (12, 1, 2):
+        return "winter"
+    if m in (3, 4, 5):
+        return "spring"
+    if m in (6, 7, 8):
+        return "summer"
+    return "autumn"
+
+
+def weather_test(df: pd.DataFrame, city: str, current_city_temp: float):
+    SEASON = get_season(today)
+
+    df = weather_analysis(df)
+
+    mean_seasonal_temperature = df[(df['city'] == city) & (df['season'] == SEASON)]['mean_seasonal_temperature'].iloc[0]
+    std_seasonal_temperature = df[(df['city'] == city) & (df['season'] == SEASON)]['std_seasonal_temperature'].iloc[0]
+
+    lower = mean_seasonal_temperature - 2 * std_seasonal_temperature
+    higher = mean_seasonal_temperature + 2 * std_seasonal_temperature
+    outlier_check = str(np.where((current_city_temp > higher) | (current_city_temp < lower), 'за пределами нормы', 'в норме'))
+
+    return outlier_check
+
+
 st.title("Анализ погоды OpenWeatherMap")
 
 uploaded_file = st.file_uploader("Загрузите CSV файл", type=["csv"])
@@ -120,6 +146,8 @@ if row.empty:
     st.warning(f"Не удалось получить погоду для города: {city}")
 else:
     st.metric(label=f"Температура в {city}", value=f"{row.iloc[0]} °C")
+    indicator = weather_test(df, city, row)
+    st.metric(value=indicator)
 
 st.subheader(f"Описательная статистика для {city}")
 st.table(df[df["city"] == city].describe())
@@ -188,6 +216,7 @@ seasons_profiling_df = seasons_profiling_df.rename(columns={
 
 st.subheader(f"Сезонные профили погоды для {city}")
 st.table(seasons_profiling_df)
+
 
 
 
