@@ -99,5 +99,6 @@ if row.empty:
 else:
     st.metric(label=f"Температура в {city}", value=f"{row.iloc[0]} °C")
 
+st.table(weather_df[weather_df["city"] == city].describe())
 
 
