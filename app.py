@@ -174,8 +174,7 @@ season_map = {
 }
 
 seasons_profiling_df = prepared_df.copy()
-seasons_profiling_df = seasons_profiling_df.drop_duplicates(subset = ['season'])[['season', 'mean_seasonal_temperature','std_seasonal_temperature']]
-                                           .reset_index(drop = True)
+seasons_profiling_df = seasons_profiling_df.drop_duplicates(subset = ['season'])[['season', 'mean_seasonal_temperature','std_seasonal_temperature']].reset_index(drop = True)
 
 # переименовать значения в колонке season
 seasons_profiling_df["season"] = seasons_profiling_df["season"].map(season_map).fillna(seasons_profiling_df["season"])
@@ -189,6 +188,7 @@ seasons_profiling_df = seasons_profiling_df.rename(columns={
 
 st.subheader(f"Сезонные профили погоды для {city}")
 st.table(seasons_profiling_df)
+
 
 
 
