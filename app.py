@@ -139,7 +139,14 @@ color_scale = alt.Scale(
     range=["#6f86b7", "#3a3a3a", "#b56b6b"]  # muted blue, anthracite, muted red
 )
 
-chart = (
+# окно по умолчанию: последние 4 года
+max_ts = prepared_df["timestamp"].max()
+min_default = max_ts - pd.DateOffset(years=4)
+
+# интерактивный "ползунок" по X (interval selection)
+brush = alt.selection_interval(encodings=["x"])
+
+base = (
     alt.Chart(prepared_df)
     .mark_bar()
     .encode(
@@ -152,11 +159,33 @@ chart = (
             alt.Tooltip("outlier:N", title="Outlier"),
         ],
     )
-    .properties(height=350)
-    .interactive()
 )
 
+# основной график (крупный), реагирует на выделение снизу
+main = (
+    base.transform_filter(brush)
+        .properties(height=450)
+)
+
+# ползунок
+overview = (
+    alt.Chart(prepared_df)
+    .mark_area(opacity=0.25)
+    .encode(
+        x=alt.X(
+            "timestamp:T",
+            title="",
+            scale=alt.Scale(domain=[min_default, max_ts])  # старт: последние 4 года
+        ),
+        y=alt.Y("temperature:Q", title=""),
+    )
+    .properties(height=80)
+    .add_params(brush)
+)
+
+chart = alt.vconcat(main, overview)
 st.altair_chart(chart, use_container_width=True)
+
 
 
 
