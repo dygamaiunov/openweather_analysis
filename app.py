@@ -26,7 +26,7 @@ async def get_all_current_weather_async(df: pd.DataFrame, api_key: str) -> pd.Da
                 timeout=aiohttp.ClientTimeout(total=10),
             ) as resp:
                 if resp.status == 401:
-                    raise ValueError('Неверный API ключ. Пожалуйста, введите корректный API-ключ')
+                    st.error('Неверный API ключ. Пожалуйста, введите корректный API-ключ')
                 resp.raise_for_status()
                 data = await resp.json()
                 return {"city": city, "temp_now": data["main"]["temp"]}
@@ -96,3 +96,4 @@ if row.empty:
 else:
 
     st.metric(label=f"Температура в {city}", value=f"{row.iloc[0]} °C")
+
