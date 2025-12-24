@@ -63,7 +63,7 @@ def weather_analysis(df):
     # подсчет среднего и ско температуры по городам и сезонам
     means = df.groupby(['city', 'season'], as_index=False)['temperature'].mean().rename(columns={"temperature": "mean_seasonal_temperature"})
     stds = df.groupby(['city', 'season'], as_index=False)['temperature'].std().rename(columns={"temperature": "std_seasonal_temperature"})
-    df = temp_df.merge(means, on=["city", "season"], how="left").merge(stds, on=["city", "season"], how="left")
+    df = df.merge(means, on=["city", "season"], how="left").merge(stds, on=["city", "season"], how="left")
 
     # подсчет выбросов по среднему +- 2ско
     mean_ = df['temperature'].mean()
@@ -156,6 +156,7 @@ chart = (
 )
 
 st.altair_chart(chart, use_container_width=True)
+
 
 
 
