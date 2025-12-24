@@ -143,18 +143,16 @@ color_scale = alt.Scale(
 max_ts = prepared_df["timestamp"].max()
 min_ts = prepared_df["timestamp"].min()
 
-# стартовый диапазон: последний год (если данных меньше года — покажем всё)
-min_default = max(min_ts, max_ts - pd.DateOffset(years=1))
+# последние 12 месяцев
+start_12m = max_ts - pd.DateOffset(months=12)
+df_last12 = prepared_df[prepared_df["timestamp"] >= start_12m].copy()
 
-# selection "ползунок" по оси X
-brush = alt.selection_interval(
-    encodings=["x"],
-    value={"x": [min_default, max_ts]},  # диапазон по умолчанию
-)
+# "ползунок" (выбор интервала) по оси X
+brush = alt.selection_interval(encodings=["x"])
 
-# базовая часть (столбики с цветами и тултипом)
-base = (
-    alt.Chart(prepared_df)
+# основной график: ТОЛЬКО последние 12 месяцев + сохраняем окраску outliers
+main = (
+    alt.Chart(df_last12)
     .mark_bar()
     .encode(
         x=alt.X("timestamp:T", title="Дата"),
@@ -166,12 +164,11 @@ base = (
             alt.Tooltip("outlier:N", title="Outlier"),
         ],
     )
+    .properties(height=450)
+    .transform_filter(brush)   # фильтр по выбранному диапазону
 )
 
-# показывает только выбранный диапазон
-main = base.transform_filter(brush).properties(height=450)
-
-# нижняя панель(по ней выделяем диапазон)
+# нижняя панель: вся история (для выбора диапазона)
 overview = (
     alt.Chart(prepared_df)
     .mark_area(opacity=0.25)
@@ -184,8 +181,8 @@ overview = (
 )
 
 chart = alt.vconcat(main, overview).resolve_scale(x="shared")
-
 st.altair_chart(chart, use_container_width=True)
+
 
 
 
