@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import asyncio
 import aiohttp
+import altair as alt
 
 
 # добавим асинхронную функцию
@@ -51,7 +52,27 @@ def run_async(coro):
     else:
         return asyncio.run(coro)
 
+def weather_analysis(df):
+    df = df.sort_values(["city", "timestamp"]).reset_index(drop=True)
 
+    # подсчет скользящего среднего по городам за 30 дней
+    df["rolling_avg"] = (df.groupby("city", group_keys=False)
+                                    .apply(lambda g: pd.Series(g.set_index("timestamp")["temperature"]
+                                    .rolling("30D", min_periods=1).mean().values, index=g.index)))
+
+    # подсчет среднего и ско температуры по городам и сезонам
+    means = df.groupby(['city', 'season'], as_index=False)['temperature'].mean().rename(columns={"temperature": "mean_seasonal_temperature"})
+    stds = df.groupby(['city', 'season'], as_index=False)['temperature'].std().rename(columns={"temperature": "std_seasonal_temperature"})
+    df = temp_df.merge(means, on=["city", "season"], how="left").merge(stds, on=["city", "season"], how="left")
+
+    # подсчет выбросов по среднему +- 2ско
+    mean_ = df['temperature'].mean()
+    std_ = df['temperature'].std()
+    lower = mean_ - 2*std_
+    higher = mean_ + 2*std_
+    df['outlier'] = np.where((df['temperature'] > higher) | (df['temperature'] < lower), 1, 0)
+
+    return df
 
 st.title("Анализ погоды OpenWeatherMap")
 
@@ -102,8 +123,39 @@ else:
 st.subheader(f"Описательная статистика для {city}")
 st.table(df[df["city"] == city].describe())
 
+prepared_df = weather_analysis(df.copy())
+prepared_df = prepared_df[prepared_df["city"] == city].sort_values("timestamp")
 
+# категория для цвета
+prepared_df["cat"] = np.where(
+    (prepared_df["outlier"] == 1) & (prepared_df["temperature"] > 0), "high_outlier",
+    np.where((prepared_df["outlier"] == 1) & (prepared_df["temperature"] < 0), "low_outlier", "normal")
+)
 
+# приглушённые цвета
+color_scale = alt.Scale(
+    domain=["low_outlier", "normal", "high_outlier"],
+    range=["#6f86b7", "#3a3a3a", "#b56b6b"]  # muted blue, anthracite, muted red
+)
+
+chart = (
+    alt.Chart(prepared_df)
+    .mark_bar()
+    .encode(
+        x=alt.X("timestamp:T", title="Дата"),
+        y=alt.Y("temperature:Q", title="Температура (°C)"),
+        color=alt.Color("cat:N", scale=color_scale, legend=None),
+        tooltip=[
+            alt.Tooltip("timestamp:T", title="Дата"),
+            alt.Tooltip("temperature:Q", title="Температура", format=".2f"),
+            alt.Tooltip("outlier:N", title="Outlier"),
+        ],
+    )
+    .properties(height=350)
+    .interactive()
+)
+
+st.altair_chart(chart, use_container_width=True)
 
 
 
